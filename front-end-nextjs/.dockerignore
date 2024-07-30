@@ -1,0 +1,25 @@
+# Node modules (they will be installed fresh in the container)
+node_modules
+
+# Next.js build output
+.next
+
+# Environment files
+.env*
+
+# Version control
+.git
+.gitignore
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.idea
+*.swp
+*.swo
+.vscode

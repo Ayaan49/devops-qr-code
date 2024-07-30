@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import qrcode
 import boto3
+import os
 from io import BytesIO
 
 # Loading Environment variable (AWS Access Key and Secret Key)
@@ -23,8 +24,12 @@ app.add_middleware(
 )
 
 # AWS S3 Configuration
-s3 = boto3.client('s3')
-bucket_name = 'YOUR_BUCKET_NAME' # Add your bucket name here
+s3 = boto3.client(
+    's3',
+    aws_access_key_id= os.getenv("AWS_ACCESS_KEY"),
+    aws_secret_access_key= os.getenv("AWS_SECRET_KEY"))
+
+bucket_name = 'new-bucket666' # Add your bucket name here
 
 @app.post("/generate-qr/")
 async def generate_qr(url: str):
@@ -39,7 +44,7 @@ async def generate_qr(url: str):
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white")
-    
+
     # Save QR Code to BytesIO object
     img_byte_arr = BytesIO()
     img.save(img_byte_arr, format='PNG')
@@ -51,10 +56,9 @@ async def generate_qr(url: str):
     try:
         # Upload to S3
         s3.put_object(Bucket=bucket_name, Key=file_name, Body=img_byte_arr, ContentType='image/png', ACL='public-read')
-        
+
         # Generate the S3 URL
         s3_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
         return {"qr_code_url": s3_url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
