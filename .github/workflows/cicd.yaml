@@ -1,0 +1,94 @@
+name: CICD for API and Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+
+jobs:
+
+  build-and-test-fastapi:
+    runs-on: ubuntu latest
+    defaults:
+      working-directory: ./api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Test
+        run: pytest
+
+      - name: Run Linter
+        run: flake8 .
+
+
+  build-and-test-front-end-nextjs:
+    runs-on: ubuntu-latest
+    defaults:
+      working-directory: ./front-end-nextjs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Run Linter
+        run: npm run lint
+
+
+  build-and-push-images:
+    needs: [build-and-test-fastapi, build-and-test-front-end-nextjs]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push FastAPI image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/qr-api:${{ github.run_id }}
+
+      - name: Build and Push Next.js image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./front-end-nextjs
+          file: ./front-end-nextjs/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/qr-frontend:${{ github.run_id }}
