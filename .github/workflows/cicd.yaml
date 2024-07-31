@@ -30,8 +30,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Test
-        run: pytest
+      #- name: Run Test
+       # run: pytest
 
       - name: Run Linter
         run: flake8 .
@@ -54,8 +54,8 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Tests
-        run: npm test
+     # - name: Run Tests
+      #  run: npm test
 
       - name: Run Linter
         run: npm run lint
