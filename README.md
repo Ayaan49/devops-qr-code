@@ -273,3 +273,183 @@ Test the application by trying to generate `qr code` from any website `url`.
     ]
 }
 ```
+
+## Creating CICD pipeline
+
+ Inside the repo create `.github/workflows` folder:
+
+```
+mkdir .github
+
+cd .github
+
+mkdir workflows
+```
+
+1. Create a file called `cicd.yaml` inside the `workflows` and add the following code:
+
+```
+name: CICD for API and Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+
+jobs:
+
+  build-and-test-fastapi:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      #- name: Run Test
+       # run: pytest
+
+      #- name: Run Linter
+       # run: flake8 .
+
+  build-and-test-front-end-nextjs:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./front-end-nextjs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+     # - name: Run Tests
+      #  run: npm test
+
+      - name: Run Linter
+        run: npm run lint
+
+  build-and-push-images:
+    needs: [build-and-test-fastapi, build-and-test-front-end-nextjs]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push FastAPI image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/qr-api:${{ github.sha }}
+
+      - name: Build and Push Next.js image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./front-end-nextjs
+          file: ./front-end-nextjs/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/qr-frontend:${{ github.sha }}
+
+```
+
+### CI/CD Pipeline for API and Frontend
+
+This YAML file defines a GitHub Actions workflow that implements a Continuous Integration and Continuous Deployment (CI/CD) pipeline for a project consisting of a FastAPI backend and a Next.js frontend.
+
+### Workflow Overview
+
+- **Name**: CICD for API and Frontend
+- **Trigger**: Pushes to the `main` branch, excluding changes to README.md and LICENSE files
+- **Structure**: Three main jobs that run in sequence
+
+### Job 1: Build and Test FastAPI Backend
+
+- **Environment**: Ubuntu latest
+- **Working Directory**: ./api
+- **Steps**:
+  1. Checkout the repository
+  2. Set up Python 3.11
+  3. Install Python dependencies from requirements.txt
+### Job 2: Build and Test Next.js Frontend
+
+- **Environment**: Ubuntu latest
+- **Working Directory**: ./front-end-nextjs
+- **Steps**:
+  1. Checkout the repository
+  2. Set up Node.js 20
+  3. Install Node.js dependencies with `npm ci`
+### Job 3: Build and Push Docker Images
+
+- **Dependencies**: Requires successful completion of the FastAPI and Next.js jobs
+- **Environment**: Ubuntu latest
+- **Steps**:
+  1. Checkout the repository
+  2. Set up Docker Buildx for multi-platform builds
+  3. Log in to DockerHub using secrets
+  4. Build and push FastAPI Docker image
+     - Context: ./api
+     - Dockerfile: ./api/Dockerfile
+     - Tag: qr-api:${github.sha}
+  5. Build and push Next.js Docker image
+     - Context: ./front-end-nextjs
+     - Dockerfile: ./front-end-nextjs/Dockerfile
+     - Tag: qr-frontend:${github.sha}
+
+
+This CI/CD pipeline ensures that code changes are automatically built, and packaged into Docker images, ready for deployment.
+
+### Environment configurations:
+
+- Navigate to the settings of your `devops-qr-code` repo.
+-  Click on `Secrets and variables` and select `Actions`
+-  Create three `New Repository Secret`and the following secrets:
+
+```
+# Your Dockerhub Username
+DOCKERHUB_USERNAME
+
+# Your Dockerhub Personal Access Token which you can generate in your Dockerhub account
+DOCKERHUB_TOKEN
+
+# Your Github Personal Aceess Token which you can generate in your Github account
+TOKEN
+```
+
+We create these three secrets so that we don't leak our passwords in the CICD manifest.
+
+- Push these changes in your repo and you have automated your project.
+- Now a new docker image with `github.run_id` will be pushed into your Dockerhub account when it passes all the stages in Github actions.
