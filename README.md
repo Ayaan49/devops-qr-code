@@ -453,3 +453,6 @@ We create these three secrets so that we don't leak our passwords in the CICD ma
 
 - Push these changes in your repo and you have automated your project.
 - Now a new docker image with `github.run_id` will be pushed into your Dockerhub account when it passes all the stages in Github actions.
+
+![workflow_success](https://github.com/user-attachments/assets/3d5c1826-ff01-47b1-b3a5-16dc183699f3)
+
