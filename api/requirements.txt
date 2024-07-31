@@ -5,6 +5,7 @@ botocore==1.34.11
 click==8.1.7
 exceptiongroup==1.2.0
 fastapi==0.105.0
+flake8
 h11==0.14.0
 idna==3.6
 jmespath==1.0.1
