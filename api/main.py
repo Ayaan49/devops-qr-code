@@ -5,10 +5,7 @@ import boto3
 import os
 from io import BytesIO
 from botocore.exceptions import ClientError
-
-# Loading Environment variable (AWS Access Key and Secret Key)
-from dotenv import load_dotenv
-load_dotenv()
+import logging
 
 app = FastAPI()
 
@@ -27,7 +24,6 @@ app.add_middleware(
 )
 
 # Set up logging
-import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -35,8 +31,11 @@ logger = logging.getLogger(__name__)
 try:
     s3 = boto3.client('s3')
     logger.info("Successfully created S3 client")
+    # Test S3 connection
+    s3.list_buckets()
+    logger.info("Successfully connected to S3")
 except Exception as e:
-    logger.error(f"Failed to create S3 client: {str(e)}")
+    logger.error(f"Failed to create S3 client or connect to S3: {str(e)}")
     raise
 
 # Get bucket name from environment variable
@@ -44,7 +43,6 @@ bucket_name = os.getenv('S3_BUCKET_NAME')
 if not bucket_name:
     logger.error("S3_BUCKET_NAME environment variable is not set")
     raise ValueError("S3_BUCKET_NAME environment variable is not set")
-
 logger.info(f"Using S3 bucket: {bucket_name}")
 
 @app.get("/")
@@ -65,7 +63,6 @@ async def generate_qr(url: str):
         )
         qr.add_data(url)
         qr.make(fit=True)
-
         img = qr.make_image(fill_color="black", back_color="white")
         logger.info("QR code image generated successfully")
 
@@ -81,7 +78,8 @@ async def generate_qr(url: str):
 
         # Upload to S3
         try:
-            s3.put_object(
+            logger.info(f"Attempting to upload file {file_name} to bucket {bucket_name}")
+            response = s3.put_object(
                 Bucket=bucket_name, 
                 Key=file_name, 
                 Body=img_byte_arr, 
@@ -89,16 +87,18 @@ async def generate_qr(url: str):
                 ACL='public-read'
             )
             logger.info(f"Successfully uploaded QR code to S3: {file_name}")
+            logger.info(f"S3 response: {response}")
         except ClientError as e:
-            logger.error(f"S3 upload failed: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Failed to upload to S3: {str(e)}")
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            logger.error(f"S3 upload failed. Error code: {error_code}, Message: {error_message}")
+            raise HTTPException(status_code=500, detail=f"Failed to upload to S3: {error_message}")
 
         # Generate the S3 URL
         s3_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
         logger.info(f"Generated S3 URL: {s3_url}")
         
         return {"qr_code_url": s3_url}
-
     except Exception as e:
         logger.error(f"Error generating QR code: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") 
