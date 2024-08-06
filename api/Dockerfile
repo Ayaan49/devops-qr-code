@@ -2,6 +2,8 @@
 
 FROM python:3.9 as base
 
+RUN apt update && apt install -y dnsutils
+
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
 
