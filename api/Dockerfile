@@ -2,8 +2,6 @@
 
 FROM python:3.9 as base
 
-
-
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -24,6 +22,7 @@ COPY . .
 FROM python:3.9-slim
 
 RUN apt update && apt install -y dnsutils
+RUN pip install awscli
 
 WORKDIR /app
 
