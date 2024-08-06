@@ -28,22 +28,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # AWS S3 Configuration
-try:
-    s3 = boto3.client('s3')
-    logger.info("Successfully created S3 client")
-    # Test S3 connection
-    s3.list_buckets()
-    logger.info("Successfully connected to S3")
-except Exception as e:
-    logger.error(f"Failed to create S3 client or connect to S3: {str(e)}")
-    raise
+s3 = boto3.client('s3')
+logger.info("S3 client created")
 
 # Get bucket name from environment variable
 bucket_name = os.getenv('S3_BUCKET_NAME')
 if not bucket_name:
-    logger.error("S3_BUCKET_NAME environment variable is not set")
-    raise ValueError("S3_BUCKET_NAME environment variable is not set")
-logger.info(f"Using S3 bucket: {bucket_name}")
+    logger.warning("S3_BUCKET_NAME environment variable is not set")
+else:
+    logger.info(f"Using S3 bucket: {bucket_name}")
 
 @app.get("/")
 async def root():
@@ -52,6 +45,9 @@ async def root():
 @app.post("/generate-qr/")
 async def generate_qr(url: str):
     logger.info(f"Received request to generate QR code for URL: {url}")
+    
+    if not bucket_name:
+        raise HTTPException(status_code=500, detail="S3_BUCKET_NAME is not set")
     
     try:
         # Generate QR Code
@@ -87,11 +83,9 @@ async def generate_qr(url: str):
                 ACL='public-read'
             )
             logger.info(f"Successfully uploaded QR code to S3: {file_name}")
-            logger.info(f"S3 response: {response}")
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            error_message = e.response['Error']['Message']
-            logger.error(f"S3 upload failed. Error code: {error_code}, Message: {error_message}")
+            error_message = str(e)
+            logger.error(f"S3 upload failed: {error_message}")
             raise HTTPException(status_code=500, detail=f"Failed to upload to S3: {error_message}")
 
         # Generate the S3 URL
