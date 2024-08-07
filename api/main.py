@@ -10,8 +10,8 @@ app = FastAPI()
 
 # Allowing CORS for local testing
 origins = [
-    "https://dev.qr-app.devfun.me"
-    "http://localhost:3000"    
+    "https://dev.qr-app.devfun.me",
+    "http://localhost:3000"
 ]
 
 app.add_middleware(
@@ -22,9 +22,18 @@ app.add_middleware(
 )
 
 # AWS S3 Configuration
-s3 = boto3.client('s3')
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_DEFAULT_REGION')
+)
 
 bucket_name = 'new-bucket666'  # Add your bucket name here
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
 @app.post("/generate-qr/")
 async def generate_qr(url: str):
@@ -32,9 +41,9 @@ async def generate_qr(url: str):
         # Generate QR Code
         qr = qrcode.QRCode(
             version=1,
-            error_correction=qrcode.constants.
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
             box_size=10,
-            border=4,
+            border=4
         )
         qr.add_data(url)
         qr.make(fit=True)
