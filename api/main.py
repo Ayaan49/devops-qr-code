@@ -10,6 +10,7 @@ app = FastAPI()
 # Allowing CORS for local testing
 origins = [
     "http://localhost:3000"
+    "http://ab14be050032148b981308874f08832f-24552975.us-west-2.elb.amazonaws.com/"
 ]
 
 app.add_middleware(
