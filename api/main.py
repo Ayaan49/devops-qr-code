@@ -1,16 +1,17 @@
-import logging
-import qrcode
-import boto3
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import qrcode
+import boto3
+import os
+import logging
 from io import BytesIO
 
 app = FastAPI()
 
 # Allowing CORS for local testing
 origins = [
-    "http://localhost:3000"
-    "http://ab14be050032148b981308874f08832f-24552975.us-west-2.elb.amazonaws.com/"
+    "https://dev.qr-app.devfun.me"
+    "http://localhost:3000"    
 ]
 
 app.add_middleware(
@@ -31,7 +32,7 @@ async def generate_qr(url: str):
         # Generate QR Code
         qr = qrcode.QRCode(
             version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            error_correction=qrcode.constants.
             box_size=10,
             border=4,
         )
