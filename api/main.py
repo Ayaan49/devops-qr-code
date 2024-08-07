@@ -35,7 +35,7 @@ bucket_name = 'new-bucket666'  # Add your bucket name here
 async def health_check():
     return {"status": "ok"}
 
-@app.post("/generate-qr/")
+@app.post("/api/generate-qr/")
 async def generate_qr(url: str):
     try:
         # Generate QR Code
