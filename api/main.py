@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import qrcode
 import boto3
+from botocore.credentials import CredentialResolver, AssumeRoleWithWebIdentityProvider
 import os
 import logging
 from io import BytesIO
@@ -54,8 +55,18 @@ async def generate_qr(url: str):
         logger = logging.getLogger(__name__)
 
         s3 = boto3.client('s3')
-        logger.info(f"Using AWS credentials: {s3.get_credentials()}")
 
+        # Log the credential provider chain
+        credential_resolver = CredentialResolver(providers=[
+            AssumeRoleWithWebIdentityProvider(
+                client=s3._endpoint.http_session.client,
+                role_arn=s3.meta.config.role_arn,
+                web_identity_token_file="/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
+            )
+        ])
+        credentials = credential_resolver.load_credentials()
+        logger.info(f"Using AWS credentials: {credentials.access_key}, {credentials.secret_key}, {credentials.token}")
+        
         s3.put_object(Bucket=bucket_name, Key=file_name, Body=img_byte_arr, ContentType='image/png', ACL='public-read')
         logger.info(f"Successfully uploaded QR code to S3: {s3_url}")
 
