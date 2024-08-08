@@ -8,6 +8,7 @@ RUN \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
+COPY .env.local .
 COPY . .
 RUN npm run build
 
@@ -17,6 +18,7 @@ WORKDIR /app
 COPY --from=builder /app/.next /app/.next
 COPY --from=builder /app/package.json /app/package.json
 COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/.env.local /app/.env.local
 ENV BACKEND_URL=$BACKEND_URL
 EXPOSE 3000
 CMD ["npm", "start"]
