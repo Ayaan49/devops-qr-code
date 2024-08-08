@@ -2,18 +2,18 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import qrcode
 import boto3
-from botocore.session import Session
+import logger
 import os
-import logging
 from io import BytesIO
 
 app = FastAPI()
 
 # Allowing CORS for local testing
 origins = [
-    "https://dev.qr-app.devfun.me",
     "http://localhost:3000"
+	"https://dev.qr-app.devfun.me"
 ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -22,57 +22,41 @@ app.add_middleware(
 )
 
 # AWS S3 Configuration
-bucket_name = 'new-bucket666'  # Add your bucket name here
+s3 = boto3.client('s3')
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
+bucket_name = 'new-bucket666' # Add your bucket name here
 
-@app.post("/api/generate-qr/")
+@app.post("/app/generate-qr/")
 async def generate_qr(url: str):
+    # Generate QR Code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Save QR Code to BytesIO object
+    img_byte_arr = BytesIO()
+    img.save(img_byte_arr, format='PNG')
+    img_byte_arr.seek(0)
+
+    # Generate file name for S3
+    file_name = f"qr_codes/{url.split('//')[-1]}.png"
+
     try:
-        # Generate QR Code
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4
-        )
-        qr.add_data(url)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-
-        # Save QR Code to BytesIO object
-        img_byte_arr = BytesIO()
-        img.save(img_byte_arr, format='PNG')
-        img_byte_arr.seek(0)
-
-        # Generate file name for S3
-        file_name = f"qr_codes/{url.split('//')[-1]}.png"
-
         # Upload to S3
-        logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger(__name__)
-
-        s3 = boto3.client('s3')
-
-        # Get the AWS credentials using the botocore session    
-        session = Session()
-        session.set_credentials_from_assume_role_with_web_identity(
-            role_arn="arn:aws:iam::<YOUR-ACCOUNT-ID>:role/eks-s3-access",
-            web_identity_token_file="/var/run/secrets/eks.amazonaws.com/serviceaccount/token"
-        )
-        credentials = session.get_credentials()
-        logger.info(f"Using AWS credentials: {credentials.access_key}, {credentials.secret_key}, {credentials.token}")
-
-        # Use the credentials to upload the QR code to S3
         s3.put_object(Bucket=bucket_name, Key=file_name, Body=img_byte_arr, ContentType='image/png', ACL='public-read')
         logger.info(f"Successfully uploaded QR code to S3: {s3_url}")
 
-        # Generate the S3 URL
+    # Generate the S3 URL
         s3_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
         return {"qr_code_url": s3_url}
-
     except Exception as e:
         logger.error(f"Failed to upload QR code to S3: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
