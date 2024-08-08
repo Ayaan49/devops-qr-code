@@ -13,7 +13,6 @@ origins = [
     "https://dev.qr-app.devfun.me",
     "http://localhost:3000"
 ]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -22,8 +21,6 @@ app.add_middleware(
 )
 
 # AWS S3 Configuration
-s3 = boto3.client('s3')
-
 bucket_name = 'new-bucket666'  # Add your bucket name here
 
 @app.get("/health")
@@ -42,7 +39,6 @@ async def generate_qr(url: str):
         )
         qr.add_data(url)
         qr.make(fit=True)
-
         img = qr.make_image(fill_color="black", back_color="white")
 
         # Save QR Code to BytesIO object
@@ -54,11 +50,19 @@ async def generate_qr(url: str):
         file_name = f"qr_codes/{url.split('//')[-1]}.png"
 
         # Upload to S3
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+
+        s3 = boto3.client('s3')
+        logger.info(f"Using AWS credentials: {s3.get_credentials()}")
+
         s3.put_object(Bucket=bucket_name, Key=file_name, Body=img_byte_arr, ContentType='image/png', ACL='public-read')
+        logger.info(f"Successfully uploaded QR code to S3: {s3_url}")
 
         # Generate the S3 URL
         s3_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
         return {"qr_code_url": s3_url}
+
     except Exception as e:
-        logging.error("Failed to upload QR code to S3", exc_info=True)
+        logger.error(f"Failed to upload QR code to S3: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
