@@ -1,44 +1,27 @@
-# Build Stage
+# api dockerfile
 
-FROM python:3.9 as base
+FROM python:3.9
 
-# Prevents Python from writing pyc files.
-ENV PYTHONDONTWRITEBYTECODE=1
+#Set the working directory in the container 
 
-# Keeps Python from buffering stdout and stderr to avoid situations where
-# the application crashes without emitting any logs due to buffering.
-ENV PYTHONUNBUFFERED=1
+WORKDIR /usr/src/app
 
-WORKDIR /app
+# Copy the dependencies file to the working directory
 
 COPY requirements.txt ./
 
-RUN pip install -r requirements.txt
+#Install any needed packages specified in requirements.txt
 
-COPY . .
+RUN pip install -no-cache-dir -r requirements.txt
 
-# RUN Stage
+# Copy the content of the local src directory to the working directory
 
-FROM python:3.9-slim
+COPY .. 
 
-RUN apt update && apt install -y dnsutils
-RUN pip install awscli
+#Run the application 
 
-WORKDIR /app
-
-ARG UID=10001
-RUN adduser \
-	--disabled-password \
-	--home "/nonexistent" \
-	--shell "/sbin/nologin" \
-	--no-create-home \
-	--uid "${UID}" \
-	apiuser
-
-COPY --from=base /app ./
-COPY --from=base /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
-COPY --from=base /usr/local/bin /usr/local/bin
-
-USER apiuser
 EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+CMD ["uvicorn", "main:app", "-host", "0.0.0.0", "-port", "8000"]
+
+
