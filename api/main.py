@@ -26,6 +26,9 @@ s3 = boto3.client('s3')
 
 bucket_name = 'new-bucket666' # Add your bucket name here
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
+
 @app.post("/api/generate-qr/")
 async def generate_qr(url: str):
     # Generate QR Code
@@ -56,7 +59,7 @@ async def generate_qr(url: str):
     # Generate the S3 URL
         s3_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
         return {"qr_code_url": s3_url}
-    except Exception as e:
-        logger.error(f"Failed to upload QR code to S3: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+	except Exception as e:
+		logger.error(f"Failed to upload QR code to S3: {e}", exc_info=True)
+        	raise HTTPException(status_code=500, detail="Error generating QR code")
 
