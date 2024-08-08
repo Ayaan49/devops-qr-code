@@ -39,13 +39,6 @@ COPY --from=base /app ./
 COPY --from=base /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
 COPY --from=base /usr/local/bin /usr/local/bin
 
-# Ensure apiuser can read the AWS token file
-RUN mkdir -p /var/run/secrets/eks.amazonaws.com/serviceaccount && \
-    chown -R apiuser:apiuser /var/run/secrets/eks.amazonaws.com/serviceaccount
-
-# Set the AWS_WEB_IDENTITY_TOKEN_FILE environment variable
-ENV AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/eks.amazonaws.com/serviceaccount/token
-
 USER apiuser
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
