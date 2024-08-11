@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qr-frontend
+  labels:
+    app: qr-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qr-frontend
+  template:
+    metadata:
+      name: qr-frontend
+      labels:
+        app: qr-frontend
+    spec:
+      containers:
+      - name: qr-frontend
+        image: ayaan49/qr-frontend:test
+        env:
+        - name: BACKEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: frontend-config
+              key: BACKEND_URL
+        ports:
+        - containerPort: 3000

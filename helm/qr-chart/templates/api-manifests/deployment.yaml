@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.apiAppName }}
+  labels:
+    app: {{ .Values.apiAppName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.apiAppName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apiAppName }}
+    spec:
+      serviceAccountName: {{ .Values.saName }}
+      automountServiceAccountToken: true
+      containers:
+      - name: {{ .Values.apiAppName }}
+        image: "{{ .Values.apiImg.name }}:{{ .Values.apiImg.tag }}"
+        ports:
+        - containerPort: 8000

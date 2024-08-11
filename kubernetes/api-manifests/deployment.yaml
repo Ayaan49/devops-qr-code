@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qr-api
+  labels:
+    app: qr-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qr-api
+  template:
+    metadata:
+      labels:
+        app: qr-api
+    spec:
+      serviceAccountName: s3-access-sa
+      automountServiceAccountToken: true
+      containers:
+      - name: qr-api
+        image: ayaan49/qr-api:test
+        #env:
+        #- name: S3_BUCKET_NAME
+         # value: "new-bucket666"
+        ports:
+        - containerPort: 8000

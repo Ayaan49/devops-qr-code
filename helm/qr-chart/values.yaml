@@ -1,0 +1,22 @@
+apiAppName: qr-api
+apiImg:
+  name: ayaan49/qr-api
+  tag: test
+
+saName: s3-access-sa
+
+rolebinding:
+  name: s3-access-sa-role-binding
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    name: s3-access-role
+
+confName: frontend-config
+
+frontName: qr-frontend
+frontImg:
+  name: ayaan49/qr-frontend
+  tag: test
+urlName: BACKEND_URL
+
+ingName: qr-app

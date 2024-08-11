@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.rolebinding.name }}
+roleRef:
+  apiGroup: {{ .Values.rolebinding.roleRef.apiGroup }}
+  kind: Role
+  name: {{ .Values.rolebinding.roleRef.name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.saName }}
+  namespace: default

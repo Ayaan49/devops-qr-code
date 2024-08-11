@@ -21,6 +21,9 @@ COPY . .
 
 FROM python:3.9-slim
 
+RUN apt update && apt install -y dnsutils
+RUN pip install awscli
+
 WORKDIR /app
 
 ARG UID=10001

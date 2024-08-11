@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as base
+FROM node:18-alpine AS base
 
 WORKDIR /app
 
@@ -8,6 +8,8 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+
+COPY .env .env
 
 RUN mkdir .next
 
