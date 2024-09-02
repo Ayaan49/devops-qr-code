@@ -1,0 +1,52 @@
+loki:
+  enabled: true
+  url: http://loki:3100
+  service:
+    port: 3100
+  persistence:
+    enabled: true
+    size: 2Gi
+
+promtail:
+  enabled: true
+  config:
+    logLevel: info
+    serverPort: 3101
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+
+grafana:
+  enabled: true
+  sidecar:
+    datasources:
+      enabled: true
+      maxLines: 1000
+  image:
+    tag: 10.3.3
+  service:
+    type: ClusterIP
+  grafana.ini:
+    server:
+      root_url: "https://dev.qr-app.devfun.me/grafana"
+      serve_from_sub_path: true
+
+prometheus:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 2Gi
+  server:
+    service:
+      servicePort: 9090
+      type: ClusterIP
+  alertmanager:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 2Gi
+
+kube-state-metrics:
+  enabled: true
+
+prometheus-node-exporter:
+  enabled: true

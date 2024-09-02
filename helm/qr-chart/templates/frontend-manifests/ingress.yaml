@@ -2,6 +2,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.ingName }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: nginx
   rules:
@@ -22,3 +24,14 @@ spec:
               name: {{ .Values.apiAppName }}
               port:
                 number: 8000
+        - path: /grafana
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Values.grafName }}
+              port:
+                number: 80
+  tls:
+    - hosts:
+        - "dev.qr-app.devfun.me"
+      secretName: qr-app-tls

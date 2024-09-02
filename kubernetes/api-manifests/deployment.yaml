@@ -18,7 +18,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: qr-api
-        image: ayaan49/qr-api:test
+        image: ayaan49/qr-api:demo1
         #env:
         #- name: S3_BUCKET_NAME
          # value: "new-bucket666"

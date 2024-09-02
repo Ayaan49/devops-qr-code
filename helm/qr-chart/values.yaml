@@ -1,7 +1,7 @@
 apiAppName: qr-api
 apiImg:
   name: ayaan49/qr-api
-  tag: test
+  tag: demo1
 
 saName: s3-access-sa
 
@@ -20,3 +20,6 @@ frontImg:
 urlName: BACKEND_URL
 
 ingName: qr-app
+
+promName: prometheus-stack-kube-prom-prometheus
+grafName: loki-grafana
