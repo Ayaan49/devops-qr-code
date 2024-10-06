@@ -19,8 +19,5 @@ spec:
       containers:
       - name: qr-api
         image: ayaan49/qr-api:demo1
-        #env:
-        #- name: S3_BUCKET_NAME
-         # value: "new-bucket666"
         ports:
         - containerPort: 8000
